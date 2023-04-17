@@ -9,6 +9,7 @@
 # Verwendet wurde das Minecraft 2d Texturepack von Dman49 zu finden unter https://www.moddb.com/groups/minecraft-community/addons/original-minecraft-2d-psp-texture-pack
 
 from gamegrid import *
+# library seems to be bit buggy mouse actions called multiple times? randomly freezes? and more. Also documented rather bad
 from random import randint
 from java.awt import Point
 import time
@@ -111,7 +112,7 @@ def generateBedRock(player):
         addActor(block, Location(x, 19))
         player.addCollisionActor(block)
 
-def generateGrass(player, heights): # generate Grass and Sand at Top layer
+def generateGrass(player, heights): # generate Grass and Sand at Top layer takes the player, to add collision actors and the randomly generated height list
     for x in range(20):
         y = 19 - heights[x]
         if y < 9:
@@ -130,7 +131,7 @@ def generateGround(player): # Generate basic terrain
     heights = []
     for i in range(20):
         if i == 0:
-            heights.append(randint(7,13))
+            heights.append(randint(7,13)) # initial block
         else:
             availHeights = []
             for j in [-1,0,1]: # these are all "jumpable" heights
@@ -142,7 +143,7 @@ def generateGround(player): # Generate basic terrain
         for i in range(height):
             y = 19 - i
             Type = str(ground[randint(0,len(ground)-1)])
-            if Type != 'Gravel.png':
+            if Type != 'Gravel.png': # gravel needs to be genarted differently, cause it is a different class (falling block) ? why solved this way, was my first time coding oo, would have been better to use a field like fallable, also breakable for bedrock and so on
                 block = Block(str(absPath)+Type)
                 block.addMouseTouchListener(mouseDownOnActor, GGMouse.lPress)
                 addActor(block, Location(x, y))
@@ -161,7 +162,7 @@ def generateWater(): # fill world with water
     print('> flooding World with water')
     counter = 0
     for x in range(20):
-        for i in range(11):
+        for i in range(11): # water level 11
             y = 19 - i
             actor = getOneActorAt(Location(x,y))
             if actor == None:
@@ -241,8 +242,8 @@ class Player(Actor, GGMouseListener):
     jumpActive = False
     jumpCooldownActive = False
     selectedSlot = 1
-    items = {
-        0: 'Stone.png',
+    items = { # hotbar reachable through 1,2,3,4,5,6,7,8,9,0
+        0: 'Stone.png', # this will be displayed at end of list cause in qwerty layout 0 is after the other numbers
         1: 'Log_1.png',
         2: 'Glass.png',
         3: 'Brick.png',
@@ -270,7 +271,7 @@ class Player(Actor, GGMouseListener):
             self.setDirection(self.getDirection() - 180)
             return 10
         else:
-            if actor2.actType == 'app:trapdoor':
+            if actor2.actType == 'app:trapdoor': # trapdoors can be opened and closed, they need a further check
                 if actor2.opened:
                     return 10
                 else:
@@ -283,23 +284,23 @@ class Player(Actor, GGMouseListener):
         actor = getOneActorAt(mouseLocation)
         blockToPlaceOnIsPresent = False
         isPlayerPresent = False
-        for addX in [-1,0,1]:
+        for addX in [-1,0,1]: # check if player is in reachable distance of the block
             for addY in [-1,0,1]:
                 actors = getActorsAt(Location(mouseLocation.getX() + addX,mouseLocation.getY() + addY))
                 for el in actors:
                     if el.actType == 'player':
                         isPlayerPresent = True
-        for addX in [-1,1]:
+        for addX in [-1,1]: # check if block can be placed "against" another block
             blockToPlaceOn = getOneActorAt(Location(mouseLocation.getX() + addX,mouseLocation.getY()))
             if blockToPlaceOn != None:
-                if blockToPlaceOn.actType != 'player' and blockToPlaceOn.actType != 'fluid':
+                if blockToPlaceOn.actType != 'player' and blockToPlaceOn.actType != 'fluid': # cant place against fluid and player (self)
                     blockToPlaceOnIsPresent = True
-        for addY in [-1,1]:
+        for addY in [-1,1]: # same check different axis
             blockToPlaceOn = getOneActorAt(Location(mouseLocation.getX(),mouseLocation.getY() + addY))
             if blockToPlaceOn != None:
                 if blockToPlaceOn.actType != 'player' and blockToPlaceOn.actType != 'fluid':
                     blockToPlaceOnIsPresent = True
-        if actor == None:
+        if actor == None: # check if there isn't already a block
             if blockToPlaceOnIsPresent and isPlayerPresent:
                 if self.items[self.selectedSlot] != 'Water.png' and self.items[self.selectedSlot] != 'TNT_0.png' and self.items[self.selectedSlot] != 'Trapdoor_1.png' and self.items[self.selectedSlot] != 'Ladder.png' and self.items[self.selectedSlot] != 'Gravel.png':
                     block = Block(str(str(absPath)+str(self.items[self.selectedSlot])))
@@ -331,7 +332,7 @@ class Player(Actor, GGMouseListener):
                     block = FluidHandPlaced(str(absPath)+self.items[self.selectedSlot])
                     block.addMouseTouchListener(mouseDownOnActor, GGMouse.lPress)
                     addActor(block, mouseLocation)
-        elif actor.actType == 'fluid':
+        elif actor.actType == 'fluid': # you can place into fluid, therefore this fluid is to be removed before placement
             if self.items[self.selectedSlot] != 'Water.png' and self.items[self.selectedSlot] != 'TNT_0.png' and self.items[self.selectedSlot] != 'Trapdoor_1.png' and self.items[self.selectedSlot] != 'Ladder.png' and self.items[self.selectedSlot] != 'Gravel.png':
                 actor.removeSelf()
                 block = Block(str(str(absPath)+str(self.items[self.selectedSlot])))
@@ -368,17 +369,17 @@ class Player(Actor, GGMouseListener):
                 block = FluidHandPlaced(str(absPath)+self.items[self.selectedSlot])
                 block.addMouseTouchListener(mouseDownOnActor, GGMouse.lPress)
                 addActor(block, mouseLocation)
-        else:
-            if actor.actType == 'app:trapdoor':
+        else: # some blocks have actions if been clicked
+            if actor.actType == 'app:trapdoor': # trapdoor can open up
                 actor.opened = not actor.opened
                 actor.showNextSprite()
-            if actor.actType == 'app:TNT':
+            if actor.actType == 'app:TNT': # tnt can explode sadly not async
                 actor.explode()
 
 # hotbar classes
 
 class ItemPlaceholder(Actor):
-    actType = 'app:BedRock'
+    actType = 'app:BedRock' # bedrock is just a name used by original minecraft for indistructable blocks
 
 class HotbarSlot(Actor):
     actType = 'HotbarSlot'
@@ -387,7 +388,7 @@ class HotbarSlot(Actor):
 
 # function for act of fluid
 
-def floodWater(self,addX,addY,handPlaced):
+def floodWater(self,addX,addY,handPlaced): # constantly check if water could spread
     used = False
     actors = getActorsAt(Location(self.getX() + addX, self.getY() + addY))
     for el in actors:
@@ -407,13 +408,13 @@ def floodWater(self,addX,addY,handPlaced):
 
 # block and fluid Classes to identify the diffrence and add fluid spreading
 
-class Trapdoor(Actor):
+class Trapdoor(Actor): # Trapdoor is different, it can be opened, i could search if you can extend classes so this element could extend normal block element
     actType = 'app:trapdoor'
     opened = False
     def __init__(self):
         Actor.__init__(self, str(absPath) + 'Trapdoor.png', 2)
 
-class Ladder(Actor):
+class Ladder(Actor): # ladder is like fluid it can be "climed" but it does not spread
     actType = 'app:ladder'
     def __init__(self):
         Actor.__init__(self, str(absPath) + 'Ladder.png')
@@ -423,17 +424,17 @@ class Block(Actor):
     #def __init__(self):
         #steve.addCollisionListener(self) waehre toll wenn das gehen wuerde geht aber nicht anscheinend gibt einen error bei einem addActor(Block('some/path') es seien 2 anstatt 1 parameter in der __init__ function gegeben.
 
-class TNTBlock(Actor):
+class TNTBlock(Actor): # TNT the block all are waiting for
     actType = 'app:TNT'
     egnited = False
     def __init__(self):
         Actor.__init__(self, str(absPath) + 'TNT.png', 2)
     def explode(self):
         self.egnited = True
-        for i in range(6):
+        for i in range(6): # little animation before exploding
             self.showNextSprite()
             delay(500)
-        for addX in [-1, 0, 1]:
+        for addX in [-1, 0, 1]: # remove all blocks in 3x3 area
             for addY in [-1, 0 ,1]:
                 actors = getActorsAt(Location(self.getX() + addX, self.getY() + addY))
                 for actor in actors:
@@ -444,7 +445,7 @@ class TNTBlock(Actor):
                             actor.removeSelf()
                         else:
                             actor.explode()
-        for addX in [-2,2]:
+        for addX in [-2,2]: # randomly remove some blocks left in a 5x5 area probability of 50%
             for addY in [2,1,0,-1,-2]:
                 actors = getActorsAt(Location(self.getX() + addX, self.getY() + addY))
                 for actor in actors:
@@ -455,7 +456,7 @@ class TNTBlock(Actor):
                             actor.removeSelf()
                         else:
                             actor.explode()
-        for addY in [-2,2]:
+        for addY in [-2,2]: # same action different axis
             for addX in [2,1,0,-1,-2]:
                 actors = getActorsAt(Location(self.getX() + addX, self.getY() + addY))
                 for actor in actors:
@@ -467,19 +468,17 @@ class TNTBlock(Actor):
                         else:
                             actor.explode()
 
-# classes for blocks
-
 # irremovable block called Bedrock
 
 class BedRock(Actor):
     actType = 'app:BedRock'
 
-# grass block class, needed for tree generation
+# grass block class, needed for tree generation, cause tree needs to check if on grass block, otherwise it cant spawn
 
 class Grass(Actor):
     actType = 'app:grass_block'
 
-# Gravity block is a block, whitch falls down.
+# Gravity block is a block, wich falls down.
 
 class GravityBlock(Actor):
     actType = 'app:gravity_block'
@@ -647,7 +646,9 @@ def keyCallback(e):
 
 # main
 
-makeGameGrid(20, 20, 48, None, '/home/kreuterkeule/Documents/python/game/textures/textures/background.jpeg', keyPressed = keyCallback)
+# start initial setup
+
+makeGameGrid(20, 20, 48, None, '/home/kreuterkeule/Documents/python/game/textures/textures/background.jpeg', keyPressed = keyCallback) # define function for when a key is pressed and generate a default grid
 setSimulationPeriod(4)
 steve = Player()
 addActor(steve, Location(0,0))
@@ -666,4 +667,7 @@ steve.setLocation(Location(ranX, calculatedY))
 addMouseListener(steve, GGMouse.rClick)
 addMouseListener(steve, GGMouse.rDClick)
 show()
-doRun()
+
+# end setup
+
+doRun() # autorun
