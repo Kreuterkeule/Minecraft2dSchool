@@ -666,6 +666,7 @@ while(True):
 steve.setLocation(Location(ranX, calculatedY))
 addMouseListener(steve, GGMouse.rClick)
 addMouseListener(steve, GGMouse.rDClick)
+setSimulationPeriod(1)
 show()
 
 # end setup
